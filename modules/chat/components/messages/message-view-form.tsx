@@ -30,8 +30,10 @@ import {
   Message,
   MessageContent,
   MessageResponse,
+  MessageToolbar,
+  MessageAction,
 } from "@/components/ai-elements/message";
-import { FileText } from "lucide-react";
+import { Copy, Download, FileText } from "lucide-react";
 import {
   Reasoning,
   ReasoningContent,
@@ -40,6 +42,39 @@ import {
 import { toast } from "sonner";
 import Image from "next/image";
 
+const copyTextToClipboard = async (text: string) => {
+  if (!text) {
+    toast.error("Nothing to copy.");
+    return;
+  }
+
+  if (typeof navigator === "undefined" || !navigator.clipboard) {
+    toast.error("Clipboard is unavailable.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard.");
+  } catch (error) {
+    console.error("Copy failed", error);
+    toast.error("Copy failed.");
+  }
+};
+
+const downloadTextFile = (text: string, filename = "response.txt") => {
+  const blob = new Blob([text ?? ""], {
+    type: "text/plain;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
 
 // type DBMessage = {
 //   id: string;
@@ -107,10 +142,32 @@ function MessagePart({
   const key = `${messageId}-${partIndex}`;
 
   if (part.type === "text") {
+    const text = part.text ?? "";
+
     return (
       <Message from={role} key={key}>
         <MessageContent>
-          <MessageResponse>{part.text}</MessageResponse>
+          <MessageResponse>{text}</MessageResponse>
+          <MessageToolbar className="justify-end gap-2">
+            <MessageAction
+              type="button"
+              onClick={() => copyTextToClipboard(text)}
+              tooltip="Copy response"
+              aria-label="Copy response"
+            >
+              <Copy size={16} />
+            </MessageAction>
+            <MessageAction
+              type="button"
+              onClick={() =>
+                downloadTextFile(text, `response-${messageId}-${partIndex}.txt`)
+              }
+              tooltip="Download response"
+              aria-label="Download response"
+            >
+              <Download size={16} />
+            </MessageAction>
+          </MessageToolbar>
         </MessageContent>
       </Message>
     );

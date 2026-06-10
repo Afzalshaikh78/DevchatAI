@@ -68,7 +68,7 @@ const ChatWelcomeTabs = ({ userName = "John Doe", onMessageSelect }: ChatWelcome
               key={tab.tabName}
               variant={activeTab === index ? "default" : "secondary"}
               onClick={() => setActiveTab(index)}
-              className="w-[110px] justify-start"
+              className="w-27.5 justify-start"
             >
               {tab.icon}
               <span className="ml-2">{tab.tabName}</span>
@@ -76,7 +76,7 @@ const ChatWelcomeTabs = ({ userName = "John Doe", onMessageSelect }: ChatWelcome
           ))}
         </div>
 
-        <div className="space-y-3 w-full min-h-[240px]">
+        <div className="space-y-3 w-full min-h-60">
           {CHAT_TAB_MESSAGE[activeTab].messages.map((message, index) => (
             <div key={index}>
               <button
