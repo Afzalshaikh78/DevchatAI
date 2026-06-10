@@ -142,7 +142,7 @@ export default function ChatMessageForm({
       setMessage("");
       onMessageChange?.("");
 
-      router.push(`/chat/${result.data.id}?autoTrigger=true`);
+      router.push(`/chat/${result?.data?.id}?autoTrigger=true`);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
