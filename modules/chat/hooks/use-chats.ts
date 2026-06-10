@@ -8,8 +8,22 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+type Chat = {
+  id: string;
+  title?: string;
+  model?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
+type ActionResponse<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
+
 export const useGetChats = () => {
-  return useQuery({
+  return useQuery<Chat[]>({
     queryKey: ["chats"],
     queryFn: async () => {
       const res = await getAllChats();
@@ -19,24 +33,34 @@ export const useGetChats = () => {
 };
 
 export const useGetChatById = (chatId: string) => {
-  return useQuery({
+  return useQuery<ActionResponse<Chat & { messages: unknown[] }>>({
     queryKey: ["chats", chatId],
-    queryFn: () => getChatById(chatId),
+    queryFn: async () => {
+      const res = await getChatById(chatId);
+      return {
+        ...res,
+        data: res.data ?? undefined,
+      };
+    },
   });
 };
 
 export const useCreateChat = () => {
   const queryClient = useQueryClient();
-  const router = useRouter();
 
-  return useMutation({
+
+  return useMutation<
+    ActionResponse<Chat>,
+    Error,
+    Parameters<typeof createChatWithMessage>[0]
+  >({
     mutationFn: createChatWithMessage,
-    onSuccess: (res: any) => {
+    onSuccess: (res) => {
       if (res.success && res.data) {
         queryClient.invalidateQueries({ queryKey: ["chats"] });
       }
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error("Create chat error:", error);
       toast.error("Failed to create chat");
     },
@@ -47,16 +71,14 @@ export const useDeleteChat = (chatId: string) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  return useMutation({
+  return useMutation<ActionResponse<void>, Error>({
     mutationFn: () => deleteChat(chatId),
     onSuccess: () => {
-      // Update the list cache immediately (optimistic removal)
-      queryClient.setQueryData<any[]>(["chats"], (old) =>
+      queryClient.setQueryData<Chat[]>(["chats"], (old) =>
         old ? old.filter((chat) => chat.id !== chatId) : [],
       );
-      // Also invalidate to sync with server
       queryClient.invalidateQueries({ queryKey: ["chats"] });
-      router.push("/"); // redirect if user is on the deleted chat's page
+      router.push("/");
     },
     onError: () => {
       toast.error("Failed to delete chat");
