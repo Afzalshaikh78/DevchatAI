@@ -202,7 +202,7 @@ export default function ChatMessageForm({
               </Button>
 
               {uploadedPDF && (
-                <div className="flex items-center gap-1 bg-muted rounded-md px-2 py-1 text-xs max-w-[150px]">
+                <div className="flex items-center gap-1 bg-muted rounded-md px-2 py-1 text-xs max-w-37.5">
                   <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
                   <span className="truncate text-muted-foreground">
                     {uploadedPDF.name}
