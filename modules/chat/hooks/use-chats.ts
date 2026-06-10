@@ -32,8 +32,21 @@ export const useGetChats = () => {
   });
 };
 
+// use-chats.ts
+
+type ChatMessage = {
+  id: string;
+  content: string;
+  messageRole: "USER" | "ASSISTANT";
+  createdAt: string | Date;
+};
+
+type ChatWithMessages = Chat & {
+  messages: ChatMessage[];
+};
+
 export const useGetChatById = (chatId: string) => {
-  return useQuery<ActionResponse<Chat & { messages: unknown[] }>>({
+  return useQuery<ActionResponse<ChatWithMessages>>({
     queryKey: ["chats", chatId],
     queryFn: async () => {
       const res = await getChatById(chatId);
@@ -47,7 +60,6 @@ export const useGetChatById = (chatId: string) => {
 
 export const useCreateChat = () => {
   const queryClient = useQueryClient();
-
 
   return useMutation<
     ActionResponse<Chat>,
