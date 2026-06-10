@@ -329,11 +329,18 @@ export const MessageResponse = memo(
       )}
       plugins={streamdownPlugins}
       controls={{
-        table: { copy: true, download: true, fullscreen: true },
-        code: { copy: true, download: true },
+        table: {
+          copy: false,
+          download: false,
+          fullscreen: true,
+        },
+        code: {
+          copy: false,
+          download: false,
+        },
         mermaid: {
-          copy: true,
-          download: true,
+          copy: false,
+          download: false,
           fullscreen: true,
           panZoom: true,
         },
