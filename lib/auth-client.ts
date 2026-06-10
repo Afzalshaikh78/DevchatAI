@@ -1,5 +1,5 @@
 import { createAuthClient } from "better-auth/react"
 export const authClient = createAuthClient({
     /** The base URL of the server (optional if you're using the same domain) */
-    baseURL: "https://devchat-ai-git-main-afzals-projects-c2524272.vercel.app"
+    baseURL: "https://devchat-ai-delta.vercel.app"
 })
