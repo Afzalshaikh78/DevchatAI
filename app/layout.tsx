@@ -50,7 +50,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextTopLoader
-          color="#2563eb" // change to your brand color
+          color="#A3002D" // change to your brand color
           height={3}
           showSpinner={false}
         />
