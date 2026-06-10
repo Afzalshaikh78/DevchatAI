@@ -20,7 +20,6 @@ import {
 import {
   Conversation,
   ConversationContent,
-  ConversationDownload,
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
@@ -39,13 +38,14 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import { toast } from "sonner";
+import Image from "next/image";
 
-type DBMessage = {
-  id: string;
-  content: string;
-  messageRole: "USER" | "ASSISTANT";
-  createdAt: string | Date;
-};
+// type DBMessage = {
+//   id: string;
+//   content: string;
+//   messageRole: "USER" | "ASSISTANT";
+//   createdAt: string | Date;
+// };
 
 type MessagePartShape = {
   type: string;
@@ -162,9 +162,9 @@ function MessagePart({
         className="max-w-2xl overflow-hidden rounded-xl border border-border bg-muted/40 p-2"
         key={key}
       >
-        <img
+        <Image
           alt={part.filename || "Uploaded image"}
-          className="max-h-[28rem] w-full rounded-lg object-contain"
+          className="max-h-112 w-full rounded-lg object-contain"
           src={part.url}
         />
       </div>
@@ -184,8 +184,6 @@ function MessagePart({
 
 export const MessageViewWithForm = ({ chatId }: { chatId: string }) => {
   const { data: chatData, isPending } = useGetChatById(chatId);
-
-  console.log(chatData);
 
   if (isPending) {
     return (
@@ -236,10 +234,14 @@ const ChatView = ({
   );
   const [showModelRequiredModal, setShowModelRequiredModal] = useState(false);
   const { data: modelsData, isPending: isModelLoading } = useAIModels();
-  const fallbackModels = ((modelsData?.models ?? []) as ChatModel[])
-    .map((model) => model.id)
-    .filter((id) => id && id !== selectedModel)
-    .slice(0, 3);
+  const fallbackModels = useMemo(
+    () =>
+      ((modelsData?.models ?? []) as ChatModel[])
+        .map((model) => model.id)
+        .filter((id) => id && id !== selectedModel)
+        .slice(0, 3),
+    [modelsData?.models, selectedModel],
+  );
 
   const transport = useMemo(
     () =>
@@ -259,7 +261,7 @@ const ChatView = ({
     },
   });
 
-  const isBuzy = status === "submitted" || status === "streaming";
+  const isBusy = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     if (!shouldAutoTrigger) return;
@@ -299,21 +301,25 @@ const ChatView = ({
     fallbackModels,
   ]);
 
-  const handleSubmit = async (message: PromptInputMessage) => {
+  const handleSubmit = async (
+    message: PromptInputMessage,
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
     const text = message.text?.trim();
-    const promptText = text;
-    if (!promptText) return;
+    if (!text) return;
     if (!selectedModel) {
       setShowModelRequiredModal(true);
       return;
     }
 
-    if (isBuzy) return;
+    if (isBusy) return;
 
     try {
       await sendMessage(
         {
-          text: promptText,
+          text,
         },
         {
           body: {
@@ -351,7 +357,7 @@ const ChatView = ({
                       partIndex={i}
                       role={message.role}
                       isStreaming={
-                        isBuzy &&
+                        isBusy &&
                         message === messages.at(-1) &&
                         i === message.parts.length - 1
                       }
@@ -381,7 +387,7 @@ const ChatView = ({
           <PromptInputBody>
             <PromptInputTextarea
               placeholder="Type your message..."
-              disabled={isBuzy}
+              disabled={isBusy}
             />
           </PromptInputBody>
 

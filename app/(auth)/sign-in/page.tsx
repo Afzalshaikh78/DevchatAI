@@ -12,7 +12,7 @@ const SignInPage = () => {
         <span className='text-3xl font-extrabold text-foreground'>Devchat<span className='text-3xl text-primary'>AI</span></span>
       </div>
       <p className="mt-2 text-lg text-muted-foreground font-semibold">
-        Sign in below (we'll increase your message limits if you do 😉)
+        Sign in below (or use your Google or Github account)
       </p>
 
       <Button
