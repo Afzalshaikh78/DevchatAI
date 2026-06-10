@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import UserButton from "@/modules/authentication/components/user-button";
 import { PlusIcon, SearchIcon, EllipsisIcon, Trash } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useMemo } from "react";
 import { isToday, isYesterday, isWithinInterval, subDays } from "date-fns";
 import {
