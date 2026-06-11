@@ -1,6 +1,9 @@
 # DevchatAI
+<img width="1907" height="962" alt="Screenshot 2026-06-11 114642" src="https://github.com/user-attachments/assets/b48f2396-36c8-48e0-991d-197d6f85674a" />
 
 DevchatAI is a full-stack AI chat application built with Next.js, Prisma, PostgreSQL, Better Auth, OpenRouter, and UploadThing. It supports authenticated chats, model selection, PDF uploads, and retrieval-augmented responses from document content.
+
+Live:https://devchat-ai-delta.vercel.app
 
 ## Features
 
