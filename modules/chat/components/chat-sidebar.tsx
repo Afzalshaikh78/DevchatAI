@@ -3,9 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import UserButton from "@/modules/authentication/components/user-button";
-import { PlusIcon, SearchIcon, EllipsisIcon, Trash } from "lucide-react";
+import {
+  PlusIcon,
+  SearchIcon,
+  EllipsisIcon,
+  Trash,
+  MenuIcon,
+  XIcon,
+} from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { isToday, isYesterday, isWithinInterval, subDays } from "date-fns";
 import {
   DropdownMenu,
@@ -46,15 +53,6 @@ function groupChatsByDate(chats: ChatItemType[]): ChatGroups {
       const chatDate = chat.createdAt;
       const date = typeof chatDate === "string" ? new Date(chatDate) : chatDate;
 
-      console.log(
-        "Processing chat:",
-        chat.id,
-        "Date:",
-        date,
-        "createdAt:",
-        chatDate,
-      );
-
       if (isToday(date)) {
         groups.today.push(chat);
       } else if (isYesterday(date)) {
@@ -84,14 +82,17 @@ function ChatItem({
   chat,
   isActive,
   onDelete,
+  onNavigate,
 }: {
   chat: ChatItemType;
   isActive: boolean;
   onDelete: (e: React.MouseEvent, chatId: string) => void;
+  onNavigate?: () => void;
 }) {
   return (
     <Link
       href={`/chat/${chat.id}`}
+      onClick={onNavigate}
       className={cn(
         "flex items-center justify-between rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
         isActive && "bg-sidebar-accent",
@@ -128,11 +129,13 @@ function ChatGroup({
   chats,
   activeChatId,
   onDelete,
+  onNavigate,
 }: {
   label: string;
   chats: ChatItemType[];
   activeChatId: string | null;
   onDelete: (e: React.MouseEvent, chatId: string) => void;
+  onNavigate?: () => void;
 }) {
   if (chats.length === 0) return null;
 
@@ -147,62 +150,51 @@ function ChatGroup({
           chat={chat}
           isActive={chat.id === activeChatId}
           onDelete={onDelete}
+          onNavigate={onNavigate}
         />
       ))}
     </div>
   );
 }
 
-const ChatSidebar = ({ user }: { user: { email: string } }) => {
-  const { data: chats = [], isPending } = useGetChats() as {
-    data?: ChatItemType[];
-    isPending: boolean;
-  };
-
-  console.log("Fetched chats:", chats);
-  const pathname = usePathname();
-  const activeChatId = pathname?.startsWith("/chat/")
-    ? pathname.split("/")[2]
-    : null;
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-
-  const filteredChats = useMemo(() => {
-    if (!searchQuery) return chats;
-    const query = searchQuery.toLowerCase();
-
-    return chats.filter(
-      (chat: ChatItemType) =>
-        chat.title?.toLowerCase().includes(query) ||
-        chat.messages?.some((msg) =>
-          msg.content?.toLowerCase().includes(query),
-        ),
-    );
-  }, [searchQuery, chats]);
-
-  const groupedChats = useMemo(() => {
-    const result = groupChatsByDate(filteredChats);
-    console.log("Filtered chats:", filteredChats);
-    console.log("Grouped chats:", result);
-    return result;
-  }, [filteredChats]);
-
-  const handleDelete = (e: React.MouseEvent, chatId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSelectedChatId(chatId);
-    setIsModalOpen(true);
-  };
-
+function SidebarContent({
+  user,
+  chats,
+  isPending,
+  activeChatId,
+  searchQuery,
+  setSearchQuery,
+  filteredChats,
+  groupedChats,
+  handleDelete,
+  isModalOpen,
+  setIsModalOpen,
+  selectedChatId,
+  onNavigate,
+}: {
+  user: { email: string };
+  chats: ChatItemType[];
+  isPending: boolean;
+  activeChatId: string | null;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  filteredChats: ChatItemType[];
+  groupedChats: ChatGroups;
+  handleDelete: (e: React.MouseEvent, chatId: string) => void;
+  isModalOpen: boolean;
+  setIsModalOpen: (open: boolean) => void;
+  selectedChatId: string | null;
+  onNavigate?: () => void;
+}) {
   if (isPending) {
     return <Spinner className="m-auto" />;
   }
+
   return (
-    <div className="flex h-full w-64 flex-col border-r border-border bg-sidebar">
+    <div className="flex h-full flex-col bg-sidebar">
       {/* Header */}
       <div className="flex items-center border-b border-sidebar-border px-4 py-3">
-        <Link href="/">
+        <Link href="/" onClick={onNavigate}>
           <span className="text-2xl font-bold text-foreground">
             Devchat<span className="text-2xl text-primary">AI</span>
           </span>
@@ -211,7 +203,7 @@ const ChatSidebar = ({ user }: { user: { email: string } }) => {
 
       <div className="p-4">
         <Button asChild className="w-full">
-          <Link href="/">
+          <Link href="/" onClick={onNavigate}>
             <PlusIcon className="h-4 w-4" />
             New Chat
           </Link>
@@ -227,7 +219,6 @@ const ChatSidebar = ({ user }: { user: { email: string } }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
@@ -252,13 +243,13 @@ const ChatSidebar = ({ user }: { user: { email: string } }) => {
               chats={groupedChats[group.key]}
               activeChatId={activeChatId}
               onDelete={handleDelete}
+              onNavigate={onNavigate}
             />
           ))
         )}
       </div>
 
       {/* Footer */}
-
       <div className="p-4 flex items-center gap-3 border-t border-sidebar-border">
         <UserButton user={user} />
         <span className="flex-1 text-sm text-sidebar-foreground truncate">
@@ -272,6 +263,140 @@ const ChatSidebar = ({ user }: { user: { email: string } }) => {
         setIsModalOpen={setIsModalOpen}
       />
     </div>
+  );
+}
+
+const ChatSidebar = ({ user }: { user: { email: string } }) => {
+  const { data: chats = [], isPending } = useGetChats() as {
+    data?: ChatItemType[];
+    isPending: boolean;
+  };
+
+  const pathname = usePathname();
+  const activeChatId = pathname?.startsWith("/chat/")
+    ? pathname.split("/")[2]
+    : null;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+
+  const prevPathnameRef = useRef(pathname);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    const prevPathname = prevPathnameRef.current;
+    if (pathname !== prevPathname && isMobileOpen) {
+      const timeout = window.setTimeout(() => setIsMobileOpen(false), 0);
+      return () => window.clearTimeout(timeout);
+    }
+    prevPathnameRef.current = pathname;
+  }, [pathname, isMobileOpen]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileOpen]);
+
+  const filteredChats = useMemo(() => {
+    if (!searchQuery) return chats;
+    const query = searchQuery.toLowerCase();
+    return chats.filter(
+      (chat: ChatItemType) =>
+        chat.title?.toLowerCase().includes(query) ||
+        chat.messages?.some((msg) =>
+          msg.content?.toLowerCase().includes(query),
+        ),
+    );
+  }, [searchQuery, chats]);
+
+  const groupedChats = useMemo(
+    () => groupChatsByDate(filteredChats),
+    [filteredChats],
+  );
+
+  const handleDelete = (e: React.MouseEvent, chatId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedChatId(chatId);
+    setIsModalOpen(true);
+  };
+
+  const sharedProps = {
+    user,
+    chats,
+    isPending,
+    activeChatId,
+    searchQuery,
+    setSearchQuery,
+    filteredChats,
+    groupedChats,
+    handleDelete,
+    isModalOpen,
+    setIsModalOpen,
+    selectedChatId,
+  };
+
+  return (
+    <>
+      {/* Desktop sidebar — hidden on mobile */}
+      <div className="hidden md:flex h-full w-64 flex-col border-r border-border">
+        <SidebarContent {...sharedProps} />
+      </div>
+
+      {/* Mobile hamburger button */}
+      <div className="md:hidden fixed top-3 left-3 z-50">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsMobileOpen(true)}
+          className="h-9 w-9 bg-background border border-border shadow-sm"
+          aria-label="Open menu"
+        >
+          <MenuIcon className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Mobile overlay */}
+      {isMobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={cn(
+          "md:hidden fixed inset-y-0 left-0 z-50 w-72 border-r border-border shadow-xl transition-transform duration-300 ease-in-out",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        {/* Close button inside drawer */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsMobileOpen(false)}
+          className="absolute top-3 right-3 h-8 w-8 z-10"
+          aria-label="Close menu"
+        >
+          <XIcon className="h-4 w-4" />
+        </Button>
+
+        <SidebarContent
+          {...sharedProps}
+          onNavigate={() => setIsMobileOpen(false)}
+        />
+      </div>
+    </>
   );
 };
 

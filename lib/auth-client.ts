@@ -1,5 +1,8 @@
-import { createAuthClient } from "better-auth/react"
+import { createAuthClient } from "better-auth/react";
+
 export const authClient = createAuthClient({
-    /** The base URL of the server (optional if you're using the same domain) */
-    baseURL: "https://devchat-ai-delta.vercel.app"
-})
+  /**
+   * Same-origin works for both localhost and production when the app and auth
+   * endpoints are served from the same host.
+   */
+});
